@@ -52,6 +52,61 @@ const ChatBox = () => {
     setInput("");
   }
 
+  // for sending image
+  const sendImage = async (e) => {
+    try {
+      const fileUrl = await upload(e.target.files[0]);
+
+      if (fileUrl && messagesId) {
+        await updateDoc(doc(db,'messages',messagesId),{
+          messages: arrayUnion({
+            sId:userData.id,
+            Image:fileUrl,
+            createdAt:new Date()
+          })
+        })
+
+        const userIDs = [chatUser.rId,userData.id];
+
+        userIDs.forEach(async (id)=> {
+          const userChatsRef = doc(db,'chats',id);
+          const userChatSnapshot = await getDoc(userChatsRef);
+
+          if (userChatSnapshot.exists()) {
+            const userChatData = userChatSnapshot.data();
+            const chatIndex = userChatData.chatsData.findIndex((c)=>c.messageId === messagesId);
+            userChatData.chatsData[chatIndex].lastMessage = "Image";
+
+            userChatData.chatsData[chatIndex].updateAt = Date.now();
+
+            if (userChatData.chatsData[chatIndex].rId === userData.Id) {
+              userChatData.chatsData[chatIndex].messageSeen = false;
+            }
+            await updateDoc(userChatsRef,{
+              chatsData:userChatData.chatsData
+            })
+          }
+        })
+
+      }
+
+    } catch (error) {
+      toast.error(error.message)     
+    }
+  }
+
+  const convertTimestamp = (timestamp) => {
+    let date = timestamp.toDate();
+    const hour = date.getHours();
+    const minute = date.getMinutes();
+    if (hour>12) {
+      return hour-12 + ":" + minute + "PM";
+    }
+    else{
+      return hour + ":" + minute + "AM";
+    }
+  }
+
   useEffect(()=>{
     if (messagesId) {
       const unSub = onSnapshot(doc(db,'messages',messagesId),(res) => {
@@ -73,35 +128,28 @@ const ChatBox = () => {
 
       <div className="chat-msg">
 
-        <div className="s-msg">
-          <p className="msg">Lorem, ipsum dolor sit amet consectetur adipisicing elit.</p>
+      {
+        messages.map((msg,index)=>(
+          <div key={index} className={msg.sId === userData.id ? "s-msg" : "r-msg"}>
+            {msg["image"]
+            ? <img className='msg-img' src={msg.image} alt="" />
+            : <p className='msg'>{msg.text}</p>
+          }
+          <p className="msg">{msg.text}</p>
           <div>
-             <img src={assets.profile_img} alt="" />
-             <p>2:30 PM</p>
+             <img src={msg.sId === userData.id ? userData.avatar : chatUser.userData.avatar} alt="" />
+             <p>{convertTimestamp(msg.createdAt)}</p>
           </div>
         </div>
-        <div className="s-msg">
-          <img className='msg-img' src={assets.pic1} alt="" />
-          <div>
-             <img src={assets.profile_img} alt="" />
-             <p>2:30 PM</p>
-          </div>
-        </div>
-
-        <div className="r-msg">
-          <p className="msg">Lorem, ipsum dolor sit amet consectetur adipisicing elit.</p>
-          <div>
-          <img src={assets.profile_img} alt="" />
-          <p>2:30 PM</p>
-          </div>
-        </div>
+        ))
+      }
 
       </div>
 
 
       <div className="chat-input">
         <input onChange={(e) => setInput(e.target.value)} value={input} type="text" placeholder='Send a message' />
-        <input type="file" id='image' accept='image/png , image/jpeg' hidden/>
+        <input onChange={sendImage} type="file" id='image' accept='image/png , image/jpeg' hidden/>
         <label htmlFor="image">
           <img src={assets.gallery_icon} alt="" />
         </label>
