@@ -16,6 +16,9 @@ const AppContextProvider = (props) => {
     const [messages,setMessages] = useState([]);
     const [chatUser,setChatUser] = useState(null);
 
+    // for responsiveness
+    const[chatVisible,setChatVisible] = useState(false);
+
     const loadUserData = async (uid) => {
         try {
             const userRef = doc(db,'users',uid);
@@ -64,7 +67,15 @@ const AppContextProvider = (props) => {
     },[userData])
 
     const value = {
-        userData,setUserData,chatData,setChatData,loadUserData,messages,setMessages,messagesId,setMessagesId,chatUser,setChatUser
+        userData,setUserData,
+        chatData,setChatData,
+        loadUserData,
+        messages,setMessages,
+        messagesId,setMessagesId,
+        chatUser,setChatUser,
+
+        // for responsiveness
+        chatVisible,setChatVisible
     }
     return (
         <AppContext.Provider value={value}>
