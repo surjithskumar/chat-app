@@ -19,7 +19,7 @@ const RightSidebar = () => {
     setMsgImages(tempVar); 
   },[messages])
 
-  return chatUser ? (
+  return chatUser?.userData ? (
     <div className='rs'>
       <div className="rs-profile">
         <img src={chatUser.userData.avatar} alt="" />
@@ -28,10 +28,10 @@ const RightSidebar = () => {
       </div>
       <hr />
       <div className="rs-media">
-        <p>Media</p>
+        {/* <p>Media</p>
         <div>
           {msgImages.map((url,index)=>(<img onClick={()=>window.open(url)} key={index} src={url} alt=''/>))}
-        </div>
+        </div> */}
       </div>
       <button onClick={()=>logout()} >Logout</button>
     </div>

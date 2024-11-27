@@ -11,7 +11,7 @@ const LeftSidebar = () => {
 
   const navigate = useNavigate();
 
-  const {userData,chatData, chatUser, setChatuser, setMessagesId, messagesId, chatVisible, setChatVisible} = useContext(AppContext);
+  const {userData,chatData, chatUser, setChatUser, setMessagesId, messagesId, chatVisible, setChatVisible} = useContext(AppContext);
 
   const [user,setUser] = useState(null);
   const [showSearch,setShowSearch] = useState(false);
@@ -98,7 +98,7 @@ const LeftSidebar = () => {
 
     try {
       setMessagesId(item.messageId);
-      setChatuser(item);
+      setChatUser(item);
       const userChatsRef = doc(db,'chats',userData.id);
       const userChatsSnapshot = await getDoc(userChatsRef);
       const userChatsData = userChatsSnapshot.data();
@@ -113,18 +113,31 @@ const LeftSidebar = () => {
     }
   }
 
-  useEffect(()=>{
-
+  useEffect(() => {
     const updateChatUserData = async () => {
-      if (chatUser) {
-        const userRef = doc(db,"user",chatUser.userData.id);
-        const userSnap = await getDoc(userRef);
-        const userData = userSnap.data();
-        setChatuser(prev => ({...prev,userData:userData}))
+      if (chatUser && chatUser.userData?.id) {
+        try {
+          const userRef = doc(db, "users", chatUser.userData.id); // Corrected collection name to "users"
+          const userSnap = await getDoc(userRef);
+          if (userSnap.exists()) {
+            const userData = userSnap.data();
+            setChatUser((prev) => ({
+              ...prev,
+              userData,
+            }));
+          } else {
+            console.warn("User data not found.");
+          }
+        } catch (error) {
+          toast.error("Error fetching user data");
+          console.error(error);
+        }
       }
-    }
+    };
+  
     updateChatUserData();
-  },[chatData])
+  }, [chatUser]); // Added `chatUser` as a dependency
+  
 
   return (
     <div className={`ls ${chatVisible ? "hidden" : "" }`}>
@@ -155,7 +168,7 @@ const LeftSidebar = () => {
         Array.isArray(chatData) &&
         chatData.map((item,index)=>(
           <div onClick={()=>setChat(item)
-          } key={index} className={`friends ${item.messageSeen || item.messageId === messageId ? "" : "border"}` }>
+          } key={index} className={`friends ${item.messageSeen || item.messageId === messagesId ? "" : "border"}` }>
           <img src={item.userData.avatar} alt="" />
           <div>
               <p>{item.userData.name}</p>

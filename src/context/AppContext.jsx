@@ -26,13 +26,15 @@ const AppContextProvider = (props) => {
             const userData = userSnap.data();
             setUserData(userData);
             //for adding avatar as default if avatar isn't available
-            // if (userData.avatar && userData.name){
-            //     navigate('/chat');
-            // }
-            // else{
-            //     navigate('/profile')
-            // }
-            
+            if (userData.avatar && userData.name){
+                navigate('/chat');
+            }
+            else{
+                navigate('/profile')
+            }
+            await updateDoc(userRef,{
+                lastSeen:Date.now()
+            })
             setInterval(async()=>{
                 if(auth.chatUser){
                     await updateDoc(userRef,{
